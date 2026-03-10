@@ -35,7 +35,51 @@ IT_Support_Automation/
 ```
 
 ---
+## diagram
 
+INPUT
+tickets.csv
+     |
+     v
+NORMALIZE TEXT
+Strip spaces, lowercase
+     |
+     v
+FIX TICKET IDs
+Generate UUID if missing/duplicate
+     |
+     v
+VALIDATE EMAIL ----FAIL----> rejected_tickets.csv
+     |
+     v
+VALID PRIORITY? ---NO-----> AI detects priority + confidence score
+     |                           |
+     |                      confidence < 60%?
+     |                           |
+     |                     YES ---> HITL: Ask Human
+     |                     NO  ---> Auto approve
+     v
+VALID ISSUE TYPE? --NO----> AI detects issue type + confidence score
+     |                           |
+     |                      confidence < 60%?
+     |                           |
+     |                     YES ---> HITL: Ask Human
+     |                     NO  ---> Auto approve
+     v
+AI SUMMARIZES DESCRIPTION
+     |
+     v
+DEDUPLICATE
+Same email + issue within 24h? --> rejected_tickets.csv
+     |
+     v
+ASSIGN TEAM + SLA DEADLINE
+     |
+     v
+OUTPUT
+processed_tickets.csv
+rejected_tickets.csv
+summary_report.xlsx
 ## Requirements
 
 ### System Requirements
@@ -199,5 +243,6 @@ This mirrors how real helpdesk systems work. A user who submits the same complai
 Below 60% confidence, the AI is essentially guessing. Automating a guess in a ticket routing system causes more harm than briefly asking a human. Above 60%, the AI is making a reasonably informed decision and can be trusted to act automatically.
 
 ---
-#   i t - s u p p o r t - a u t o m a t i o n  
+#   i t - s u p p o r t - a u t o m a t i o n 
+ 
  
