@@ -199,3 +199,5 @@ This mirrors how real helpdesk systems work. A user who submits the same complai
 Below 60% confidence, the AI is essentially guessing. Automating a guess in a ticket routing system causes more harm than briefly asking a human. Above 60%, the AI is making a reasonably informed decision and can be trusted to act automatically.
 
 ---
+#   i t - s u p p o r t - a u t o m a t i o n  
+ 
