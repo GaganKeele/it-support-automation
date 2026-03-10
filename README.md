@@ -1,19 +1,18 @@
 # IT Support Ticket Automation
-### Assessment 1 — AI Intern Practical Assessment
+**Assessment 1 — AI Intern Practical Assessment**
 
 ---
 
 ## Overview
 
-This project automates the end-to-end processing of IT support tickets for a university environment. Support tickets arrive in a CSV file and are processed automatically — validated, cleaned, classified, routed to the correct team, and assigned SLA deadlines. Tickets with ambiguous or missing fields are handled intelligently using a locally running AI model instead of being blindly rejected.
+This project automates the end-to-end processing of IT support tickets for a university environment. Support tickets arrive in a CSV file and are processed automatically — validated, cleaned, classified, routed to the correct team, and assigned SLA deadlines.
 
-The system is built entirely in Python and runs offline using Ollama with the llama3.2:3b model. No paid APIs or cloud services are used.
+Tickets with ambiguous or missing fields are handled intelligently using a locally running AI model instead of being blindly rejected. The system is built entirely in Python and runs offline using Ollama with the `llama3.2:3b` model. No paid APIs or cloud services are used.
 
 ---
 
 ## Project Structure
 
-```
 IT_Support_Automation/
 │
 ├── input/
@@ -32,10 +31,10 @@ IT_Support_Automation/
 ├── ai_agent.py                  # AI classification and summarization (Ollama)
 ├── hitl.py                      # Human-in-the-Loop review for low-confidence decisions
 └── README.md                    # This file
-```
 
 ---
-## diagram
+
+## Automation Flow
 
 INPUT
 tickets.csv
@@ -46,79 +45,93 @@ Strip spaces, lowercase
      |
      v
 FIX TICKET IDs
-Generate UUID if missing/duplicate
+Generate UUID if missing or duplicate
      |
      v
-VALIDATE EMAIL ----FAIL----> rejected_tickets.csv
+VALIDATE EMAIL --------FAIL---------> rejected_tickets.csv
      |
      v
-VALID PRIORITY? ---NO-----> AI detects priority + confidence score
-     |                           |
-     |                      confidence < 60%?
-     |                           |
-     |                     YES ---> HITL: Ask Human
-     |                     NO  ---> Auto approve
+VALID PRIORITY?
+  |
+  NO -----> AI detects priority + confidence score
+                   |
+                   |--- confidence >= 60% ---> Auto approved
+                   |--- confidence  < 60% ---> HITL: Ask Human
+     |
      v
-VALID ISSUE TYPE? --NO----> AI detects issue type + confidence score
-     |                           |
-     |                      confidence < 60%?
-     |                           |
-     |                     YES ---> HITL: Ask Human
-     |                     NO  ---> Auto approve
+VALID ISSUE TYPE?
+  |
+  NO -----> AI detects issue type + confidence score
+                   |
+                   |--- confidence >= 60% ---> Auto approved
+                   |--- confidence  < 60% ---> HITL: Ask Human
+     |
      v
-AI SUMMARIZES DESCRIPTION
+AI SUMMARIZES DESCRIPTION (1 sentence)
      |
      v
 DEDUPLICATE
-Same email + issue within 24h? --> rejected_tickets.csv
+Same email + issue within 24h? -----> rejected_tickets.csv
      |
      v
-ASSIGN TEAM + SLA DEADLINE
+ASSIGN TEAM + CALCULATE SLA DEADLINE
      |
      v
 OUTPUT
-processed_tickets.csv
-rejected_tickets.csv
-summary_report.xlsx
+├── processed_tickets.csv
+├── rejected_tickets.csv
+└── summary_report.xlsx
+
+---
+
 ## Requirements
 
-### System Requirements
 - Python 3.9 or higher
 - Ollama installed and running locally
 - 8GB RAM minimum (16GB recommended)
 
-### Install Ollama
+---
 
-**Windows:** Download from https://ollama.com/download and run the installer.
+## Setup Instructions
 
-### Download the AI Model
+**Step 1 — Install Ollama**
+
+Windows: Download and run the installer from https://ollama.com/download
+
+Mac:
+brew install ollama
+
+Linux:
+curl -fsSL https://ollama.com/install.sh | sh
+
+**Step 2 — Download the AI Model**
+
 ollama pull llama3.2:3b
 
-### Install Python Dependencies
+**Step 3 — Install Python Dependencies**
+
 pip install pandas openpyxl ollama
 
 ---
 
 ## How to Run
 
-# Step 1 — Navigate to the project folder
+# Navigate to the project folder
 cd IT_Support_Automation
 
-# Step 2 — Make sure Ollama is running
+# Start Ollama
 ollama serve
 
-# Step 3 — Run the automation
+# Run the automation
 python main.py
 
-Output files will be saved automatically to the `output/` folder.
+Output files are saved automatically to the `output/` folder.
 
 ---
 
 ## Input Format
 
-Place your ticket data in `input/tickets.csv`. The script handles messy, real-world data including missing values, invalid fields, and duplicates.
-
-Required columns:
+Place ticket data in `input/tickets.csv`. The script handles messy real-world data including missing values, invalid fields, and duplicates.
 
 | Column | Description | Example |
 |---|---|---|
@@ -129,38 +142,6 @@ Required columns:
 | priority | Urgency level | High, Medium, Low |
 | description | Free-text description of the problem | Cannot connect to campus wifi |
 | timestamp | When the ticket was submitted | 2026-03-10 09:00:00 |
-
----
-
-## Automation Pipeline
-
-The script processes every ticket through the following stages in order:
-
-**Stage 1 — Load**
-Reads the CSV file and reports the total number of tickets received.
-
-**Stage 2 — Normalize**
-Strips extra whitespace and converts text fields to lowercase for consistency.
-
-**Stage 3 — Fix IDs**
-Any ticket with a missing or duplicate ticket_id is automatically assigned a new unique ID using UUID generation.
-
-**Stage 4 — Validate and AI-Fix**
-
-- Email is checked against a standard format pattern. Tickets with invalid emails are rejected — this cannot be corrected automatically.
-- Priority is checked. If the value is missing or invalid (for example "URGENT"), the AI reads the description and assigns the correct priority with a confidence score.
-- Issue type is checked. If the value is unknown or unrecognized, the AI reads the description and assigns the correct category with a confidence score.
-- If AI confidence is below 60%, the system pauses and asks the human operator to confirm or correct the decision (HITL review).
-- Valid ticket descriptions are summarized into a single clean sentence by the AI.
-
-**Stage 5 — Deduplicate**
-Tickets from the same email address reporting the same issue type within a 24-hour window are identified as duplicates. Only the first submission is kept. Subsequent duplicates are moved to the rejected list with a clear reason.
-
-**Stage 6 — Route and SLA**
-Each valid ticket is assigned to the correct team and given an SLA deadline based on priority.
-
-**Stage 7 — Output**
-Three files are saved to the `output/` folder.
 
 ---
 
@@ -188,61 +169,43 @@ Three files are saved to the `output/` folder.
 
 ## Output Files
 
-**processed_tickets.csv**
-Contains all valid, cleaned tickets. Includes the assigned team, SLA deadline, AI-generated summary, confidence score, and a flag indicating whether any field was fixed by AI or confirmed by a human.
+**processed_tickets.csv** — All valid cleaned tickets with assigned team, SLA deadline, AI summary, confidence score, and audit flag showing whether a field was auto-fixed or human-reviewed.
 
-**rejected_tickets.csv**
-Contains tickets that could not be processed, with a reason for rejection. Common reasons include invalid email format and duplicate submission within 24 hours.
+**rejected_tickets.csv** — Tickets that could not be processed, with a clear rejection reason for each.
 
-**summary_report.xlsx**
-An Excel workbook with two sheets. The first sheet shows total tickets received, processed, and rejected. The second sheet shows a breakdown of tickets per assigned team.
+**summary_report.xlsx** — Excel workbook with two sheets: overall totals (received, processed, rejected) and a per-team ticket breakdown.
 
 ---
 
 ## AI Features
 
 ### Local AI Model
-The project uses llama3.2:3b running locally via Ollama. This means no data leaves the machine, there is no API cost, and the system works without an internet connection after the model is downloaded.
+Uses `llama3.2:3b` via Ollama — runs fully offline, no API key needed, no data leaves the machine.
 
 ### Priority Detection
-When a ticket has an invalid or missing priority, the AI reads the description and classifies it as high, medium, or low. It also returns a confidence score from 0 to 100.
+When priority is missing or invalid (e.g. "URGENT"), the AI reads the ticket description and assigns `high`, `medium`, or `low` with a confidence score.
 
 ### Issue Type Detection
-When a ticket has an unknown issue type, the AI reads the description and classifies it into one of the five valid categories. It also returns a confidence score.
+When issue type is unknown, the AI reads the description and classifies it into one of the five valid categories with a confidence score.
 
 ### Description Summarization
-Every valid ticket has its description summarized into a single sentence of 15 words or fewer. This helps IT staff triage faster without reading long descriptions.
+Every valid ticket description is summarized into a single sentence (15 words or fewer) to help IT staff triage faster.
 
 ### Confidence Scoring
-Every AI classification includes a confidence score. This prevents the system from blindly trusting AI decisions. The confidence score is saved to the output file for transparency.
+Every AI decision includes a confidence score from 0 to 100. Scores are saved to the output file for full transparency.
 
 ---
 
 ## HITL — Human-in-the-Loop
 
-When the AI confidence score for any classification falls below 60%, the automation pauses and presents the human operator with the ticket details and the AI's guess. The operator can confirm the AI's suggestion or select the correct value manually.
+When AI confidence falls below 60%, the automation pauses and shows the human operator the ticket details along with the AI guess. The operator can confirm or correct the decision before processing continues.
 
-This is a deliberate design choice. In real IT environments, routing a ticket to the wrong team wastes engineer time and causes SLA breaches. HITL ensures that ambiguous tickets are handled correctly rather than silently misclassified.
-
-The output file records whether each AI decision was auto-approved or human-reviewed, creating a full audit trail.
+This prevents silent misclassification. In real IT environments, routing a ticket to the wrong team wastes engineer time and causes SLA breaches. Every HITL decision is recorded in the output file as an audit trail.
 
 ---
 
-## Design Decisions
+## Author
 
-**Why Ollama and llama3.2:3b?**
-It runs on consumer hardware (8-16GB RAM), requires no API key, costs nothing, and keeps all ticket data private on the local machine. The 3b model is fast enough for interactive HITL without frustrating delays.
-
-**Why separate files instead of one large script?**
-Each file has a single responsibility. This makes the code easier to test, debug, and extend. For example, swapping out the AI model only requires changes to ai_agent.py.
-
-**Why deduplicate by email and issue type within 24 hours?**
-This mirrors how real helpdesk systems work. A user who submits the same complaint twice in one day has not created a new problem — they are following up on an existing one. Keeping both creates duplicate work for IT staff.
-
-**Why 60% as the HITL threshold?**
-Below 60% confidence, the AI is essentially guessing. Automating a guess in a ticket routing system causes more harm than briefly asking a human. Above 60%, the AI is making a reasonably informed decision and can be trusted to act automatically.
-
----
-#   i t - s u p p o r t - a u t o m a t i o n 
- 
- 
+**Name:** Gagan Keele  
+**Date:** March 2026  
+**Assessment:** AI Intern Practical — Assessment 1
