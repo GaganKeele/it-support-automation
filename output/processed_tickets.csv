@@ -1,0 +1,8 @@
+ticket_id,name,email,issue_type,priority,description,timestamp,ai_fixed,ai_confidence,ai_summary,assigned_team,sla_deadline
+T001,John Smith,john@uni.edu,wifi,high,Cannot connect to wifi,2026-03-10 09:00:00,,,User is unable to establish a connection to the company's Wi-Fi network.,Network,2026-03-10 13:00:00
+T004,Mike Ray,mike@uni.edu,hardware,low,Screen cracked,2026-03-10 11:00:00,,,User reports a cracked screen on their device requiring assistance with repair or replacement.,Infrastructure,2026-03-13 11:00:00
+T005,Bob,bob@uni.edu,software,medium,App keeps crashing,2026-03-10 12:00:00,priority(ai-auto),63%,User's application keeps crashing and requires assistance in resolving the issue.,Applications,2026-03-11 12:00:00
+T-7A345E7A,Alice,alice@uni.edu,other,low,General inquiry,2026-03-10 13:00:00,,,User has a general inquiry about our IT services and would like assistance.,General,2026-03-13 13:00:00
+T-731EBC2D,Tom,tom@uni.edu,login,high,Cannot login,2026-03-10 14:00:00,,,User reports being unable to access the login system or their account.,IT Support,2026-03-10 18:00:00
+T007,Nina,nina@uni.edu,other,medium,Strange issue,2026-03-10 15:00:00, issue_type(ai-auto), | issue:80%,User is experiencing an unknown technical issue that needs immediate assistance.,General,2026-03-11 15:00:00
+T008,Leo,leo@uni.edu,software,medium,Excel not opening,2026-03-10 16:00:00,,,"Excel not opening, unable to launch or access the program.",Applications,2026-03-11 16:00:00

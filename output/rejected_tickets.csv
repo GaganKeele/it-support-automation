@@ -1,0 +1,3 @@
+ticket_id,name,email,issue_type,priority,description,timestamp,ai_fixed,ai_confidence,ai_summary,reject_reason
+T002,Sara Lee,sara_invalid_email,login,medium,Password reset needed,2026-03-10 10:00:00,,,,Invalid email format
+T003,John Smith,john@uni.edu,wifi,high,Still cannot connect,2026-03-10 10:30:00,,,"User unable to connect, request assistance to resolve connectivity issue.",Duplicate ticket (same email+issue within 24h)
