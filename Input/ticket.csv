@@ -1,10 +1,10 @@
 ticket_id,name,email,issue_type,priority,description,timestamp
-T001,John Smith,john@uni.edu,wifi,High,Cannot connect to wifi,2026-03-10 09:00:00
-T002,Sara Lee,sara_invalid_email,login,Medium,Password reset needed,2026-03-10 10:00:00
-T003,John Smith,john@uni.edu,wifi,High,Still cannot connect,2026-03-10 10:30:00
-T004,Mike Ray,mike@uni.edu,hardware,Low,Screen cracked,2026-03-10 11:00:00
-T005,Bob,bob@uni.edu,software,URGENT,App keeps crashing,2026-03-10 12:00:00
-,Alice,alice@uni.edu,other,Low,General inquiry,2026-03-10 13:00:00
-T001,Tom,tom@uni.edu,login,High,Cannot login,2026-03-10 14:00:00
-T007,Nina,nina@uni.edu,unknown,Medium,Strange issue,2026-03-10 15:00:00
-T008,Leo,leo@uni.edu,software,Medium,Excel not opening,2026-03-10 16:00:00
+T001,John Smith,john@uni.edu,wifi,High,Cannot connect to wifi,10/03/2026 9:00
+T002,Sara Lee,sara_invalid_email,login,Medium,Password reset needed,10/03/2026 10:00
+T003,John Smith,john@uni.edu,wifi,High,Still cannot connect,10/03/2026 10:30
+T004,Mike Ray,mike@uni.edu,hardware,Low,Screen cracked,10/03/2026 11:00
+T005,Bob,bob@uni.edu,software,URGENT,App keeps crashing,10/03/2026 12:00
+,Alice,alice@uni.edu,other,Low,General inquiry,10/03/2026 13:00
+T001,Tom,tom@uni.edu,login,High,Cannot login,10/03/2026 14:00
+T007,Nina,nina@uni.edu,unknown,Medium,Strange issue,10/03/2026 15:00
+T008,Leo,leo@uni.edu,software,Medium,Excel not opening,10/03/2026 16:00
