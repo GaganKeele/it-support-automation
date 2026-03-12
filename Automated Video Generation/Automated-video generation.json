@@ -1,0 +1,434 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        816
+      ],
+      "id": "06264517-df1c-4c2a-b657-1df381f1ba49",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1184,
+        816
+      ],
+      "id": "89df55a8-83c2-4dec-be29-a29ccaf73610",
+      "name": "input.txt"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map(item => {\n  const d = item.json;\n  return { json: {\n    ...d,\n    name:        (d.name        || '').toString().trim(),\n    email:       (d.email       || '').toString().trim().toLowerCase(),\n    issue_type:  (d.issue_type  || '').toString().trim().toLowerCase(),\n    priority:    (d.priority    || '').toString().trim().toLowerCase(),\n    description: (d.description || '').toString().trim(),\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        816
+      ],
+      "id": "7dff2c83-4b81-4ee5-ba84-f9ed846bc5eb",
+      "name": "validate_input"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.map(item => {\n  const d = item.json;\n  return { json: {\n    ...d,\n    name:        (d.name        || '').toString().trim(),\n    email:       (d.email       || '').toString().trim().toLowerCase(),\n    issue_type:  (d.issue_type  || '').toString().trim().toLowerCase(),\n    priority:    (d.priority    || '').toString().trim().toLowerCase(),\n    description: (d.description || '').toString().trim(),\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1312,
+        1088
+      ],
+      "id": "cf5a4638-3ca5-47d6-984f-b001d8013555",
+      "name": "Read and Clean Text"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "C:\\Users\\gagan\\.n8n-files\\result.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -816,
+        608
+      ],
+      "id": "f8923441-0a6e-41d8-ba78-a8c8122eab98",
+      "name": "exit"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        1040
+      ],
+      "id": "8c1b43ae-6229-49fb-a475-7ee07ee34840",
+      "name": "split into slides"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -912,
+        1040
+      ],
+      "id": "ebd01a26-37ca-44dc-b66f-353c5e953bc6",
+      "name": "Generate TTS Audio"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -800,
+        1360
+      ],
+      "id": "efbcb6ff-cc62-4fbd-90fc-fb2171ea91b5",
+      "name": "Try pyttsx3"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -672,
+        1616
+      ],
+      "id": "8308b69e-6da8-4f48-ac89-ee0939672731",
+      "name": "try gTTS"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -576,
+        1856
+      ],
+      "id": "743a3b42-5fc0-4267-bee7-a60e07585d91",
+      "name": "generate silence (FFmpeg)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -336,
+        1344
+      ],
+      "id": "e08949e6-2da2-4f7c-8512-d729d981dc5a",
+      "name": "audio_N.wav"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -160,
+        1440
+      ],
+      "id": "689dedbb-445d-4a2f-86fe-cfc9405e7b7b",
+      "name": "Pillow-Render slide Image"
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        384,
+        1376
+      ],
+      "id": "3b6efb9a-aa51-4b58-87d4-b76dcbeab914",
+      "name": "Check for All slide done ?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst routing = {\n  wifi:     'Network',\n  login:    'IT Support',\n  software: 'Applications',\n  hardware: 'Infrastructure',\n  other:    'General'\n};\n\nconst slaHours = { high: 4, medium: 24, low: 72 };\n\nfunction genId() {\n  return 'T-' + Math.random().toString(36).substr(2, 8).toUpperCase();\n}\n\nfunction parseTimestamp(raw) {\n  if (!raw) return new Date();\n  // Replace space with T so JS can parse \"2026-03-10 09:00:00\"\n  const cleaned = String(raw).trim().replace(' ', 'T');\n  const dt = new Date(cleaned);\n  // If still invalid, return now\n  return isNaN(dt.getTime()) ? new Date() : dt;\n}\n\nreturn items.map(item => {\n  const d   = item.json;\n  const ts  = parseTimestamp(d.timestamp);\n  const hrs = slaHours[d.priority] || 72;\n  const sla = new Date(ts.getTime() + hrs * 3600000);\n\n  return { json: {\n    ...d,\n    ticket_id:     genId(),\n    assigned_team: routing[d.issue_type] || 'General',\n    sla_deadline:  sla.toISOString().replace('T', ' ').substr(0, 19),\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        1376
+      ],
+      "id": "d46e611b-8ae2-49f3-bd0d-2740f5eda4e2",
+      "name": "Concatenate All clips"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst teamCount = {};\n\nfor (const item of items) {\n  const team = item.json.assigned_team || 'Unknown';\n  teamCount[team] = (teamCount[team] || 0) + 1;\n}\n\nreturn [{ json: {\n  total_processed: items.length,\n  tickets_per_team: teamCount,\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        1376
+      ],
+      "id": "c2d64023-27cc-4987-91bc-2b3f0d31e074",
+      "name": "Encode Final Video"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        1376
+      ],
+      "id": "82a5eaea-3fe8-4244-957d-e04664c40a44",
+      "name": "Output_video.mp4",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        240,
+        1168
+      ],
+      "id": "ca2f70b6-7881-43b2-8d89-fa9ad01171c4",
+      "name": "MoviePy "
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "input.txt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "input.txt": {
+      "main": [
+        [
+          {
+            "node": "validate_input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "validate_input": {
+      "main": [
+        [
+          {
+            "node": "Read and Clean Text",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "exit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read and Clean Text": {
+      "main": [
+        [
+          {
+            "node": "split into slides",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split into slides": {
+      "main": [
+        [
+          {
+            "node": "Generate TTS Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate TTS Audio": {
+      "main": [
+        [
+          {
+            "node": "Try pyttsx3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "audio_N.wav",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Try pyttsx3": {
+      "main": [
+        [
+          {
+            "node": "try gTTS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "audio_N.wav",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "try gTTS": {
+      "main": [
+        [
+          {
+            "node": "audio_N.wav",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "generate silence (FFmpeg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "audio_N.wav": {
+      "main": [
+        [
+          {
+            "node": "Pillow-Render slide Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate silence (FFmpeg)": {
+      "main": [
+        [
+          {
+            "node": "audio_N.wav",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pillow-Render slide Image": {
+      "main": [
+        [
+          {
+            "node": "MoviePy ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for All slide done ?": {
+      "main": [
+        [
+          {
+            "node": "Concatenate All clips",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "MoviePy ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Concatenate All clips": {
+      "main": [
+        [
+          {
+            "node": "Encode Final Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Encode Final Video": {
+      "main": [
+        [
+          {
+            "node": "Output_video.mp4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MoviePy ": {
+      "main": [
+        [
+          {
+            "node": "Check for All slide done ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "46950637-5cdc-436d-9d3e-16090d213573",
+  "meta": {
+    "instanceId": "6e5e2ddc70c2a4e15c689328fddb064f162329e6ac7b475a0d135bcca6686c56"
+  },
+  "id": "XxY9yQAovYVIGGG4",
+  "tags": []
+}
