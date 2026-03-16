@@ -2,28 +2,170 @@
   "name": "IT Support Ticket Automation",
   "nodes": [
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.reject_reason }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
       "position": [
-        -144,
-        -208
+        2448,
+        976
       ],
-      "id": "f43b7f29-ba5c-44e9-9b06-615679e41d77",
-      "name": "start-new ticket recived"
+      "id": "095eb0b1-8b94-40fa-a26b-bea9d482737e",
+      "name": "valid or rejected?"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nreturn items.map(item => {\n  const d = item.json;\n  return { json: {\n    ...d,\n    name:        (d.name        || '').toString().trim(),\n    email:       (d.email       || '').toString().trim().toLowerCase(),\n    issue_type:  (d.issue_type  || '').toString().trim().toLowerCase(),\n    priority:    (d.priority    || '').toString().trim().toLowerCase(),\n    description: (d.description || '').toString().trim(),\n  }};\n});"
+        "promptType": "define",
+        "text": "=Read this IT support ticket and classify its priority.\n\nDescription: {{ $json.description }}\n\nRules:\n- high = urgent, cannot work, system down\n- medium = broken but partially working  \n- low = minor issue or question\n\nReply ONLY in this exact format, nothing else:\npriority: high\nconfidence: 85",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2896,
+        720
+      ],
+      "id": "dd92451d-bfa5-4472-834e-fdefecd51523",
+      "name": "AI detects priority + confidence score"
+    },
+    {
+      "parameters": {
+        "model": "=llama3.2:3b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "typeVersion": 1,
+      "position": [
+        2976,
+        944
+      ],
+      "id": "c44c17d2-0f53-4f32-aa9e-be6a77f324a8",
+      "name": "Ollama Priority Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "L7f8mK3XgxbvZogz",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ parseInt($json.text.match(/confidence:\\s*(\\d+)/)?.[1] || '0') }}",
+              "rightValue": 60,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3248,
+        832
+      ],
+      "id": "3497969b-b2e3-4f40-97e9-de12750dfc33",
+      "name": "confidence >= 60%?"
+    },
+    {
+      "parameters": {
+        "model": "=llama3.2:3b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "typeVersion": 1,
+      "position": [
+        4000,
+        1056
+      ],
+      "id": "76bcce81-f80c-4fcb-b2b1-fd5eb6069301",
+      "name": "Ollama Issue Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "L7f8mK3XgxbvZogz",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ parseInt($json.text.match(/confidence:\\s*(\\d+)/)?.[1] || '0') }}",
+              "rightValue": 60,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4272,
+        832
+      ],
+      "id": "c07da1ba-8e02-41bf-a194-1e7bbd9bb9c0",
+      "name": "issue confidence >= 60%?"
+    },
+    {
+      "parameters": {
+        "model": "llama3.2:3b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "typeVersion": 1,
+      "position": [
+        4800,
+        1056
+      ],
+      "id": "66ef660e-56e3-4774-a925-ff00d5df6dd5",
+      "name": "Ollama Summary Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "L7f8mK3XgxbvZogz",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst teamCount = {};\n\nfor (const item of items) {\n  const team = item.json.assigned_team || 'Unknown';\n  teamCount[team] = (teamCount[team] || 0) + 1;\n}\n\nreturn [{ json: {\n  total_processed:  items.length,\n  tickets_per_team: teamCount,\n  generated_at:     new Date().toISOString(),\n}}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        240,
-        -208
+        5520,
+        928
       ],
-      "id": "8bed564b-0ed2-4e53-b485-31c7742863e6",
-      "name": "Normalize Text"
+      "id": "ce13e1bc-43b5-4847-8ce1-6decd164cbb6",
+      "name": "Generate Summary Report"
     },
     {
       "parameters": {
@@ -33,39 +175,11 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        48,
-        -208
+        1552,
+        976
       ],
-      "id": "1a6f49ff-b714-4ae0-af6b-47e1548fd3b0",
-      "name": "sample data"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        448,
-        -208
-      ],
-      "id": "e4dedc8d-68dd-4299-906d-3b0a91d9165a",
-      "name": "FIX TICKET IDs"
-    },
-    {
-      "parameters": {
-        "operation": "write",
-        "fileName": "C:\\Users\\gagan\\.n8n-files\\result.csv",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1.1,
-      "position": [
-        -32,
-        240
-      ],
-      "id": "7d206f85-2b4a-4242-ae76-482e194b4c79",
-      "name": "rejected_ticket"
+      "id": "e5569c21-dbae-46c5-8e23-7fd93937a071",
+      "name": "sample data1"
     },
     {
       "parameters": {
@@ -74,261 +188,440 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -96,
-        64
+        1776,
+        976
       ],
-      "id": "dbffe9e5-af31-4abd-b0ed-5ee72057d9b2",
-      "name": "Validate Email"
+      "id": "196ca734-1126-4139-9e47-c206d092582c",
+      "name": "Normalize Text1"
     },
     {
       "parameters": {
-        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+        "jsCode": "const items = $input.all();\nconst seenIds = new Set();\n\nreturn items.map(item => {\n  const d = item.json;\n  let tid = (d.ticket_id || '').toString().trim();\n  if (!tid || tid === 'nan' || seenIds.has(tid)) {\n    tid = 'T-' + Math.random().toString(36).substr(2, 8).toUpperCase();\n  }\n  seenIds.add(tid);\n  return { json: { ...d, ticket_id: tid }};\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        112,
-        16
-      ],
-      "id": "6e7f4e0d-8e2b-47e2-8042-0c85c5af49b3",
-      "name": "valid priority"
-    },
-    {
-      "parameters": {
-        "batching": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.9,
-      "position": [
-        304,
-        16
-      ],
-      "id": "1c24afca-02d5-4271-baf3-c812444f5b20",
-      "name": "AI detects priority + confidence score"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        672,
-        16
-      ],
-      "id": "48a2aca8-fc46-4ce2-b9b6-1cc3384b445c",
-      "name": "confidence>=60% auto approved"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        304,
-        320
-      ],
-      "id": "5fbe9d04-cb1e-4820-9827-519f44ff850a",
-      "name": "confidence < 60% ->HITL"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        656,
-        320
-      ],
-      "id": "ef1ac289-8d77-4e5a-8a2e-fa6ec0f88dc8",
-      "name": "valid issue type"
-    },
-    {
-      "parameters": {
-        "batching": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.9,
-      "position": [
-        960,
-        320
-      ],
-      "id": "74e621f5-52dd-4475-ab73-dd31e6cb6d80",
-      "name": "AI detects issue type + confidence score"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\nconst seen = [], valid = [];\n\nfor (const item of items) {\n  const d  = item.json;\n  const ts = new Date(d.timestamp).getTime();\n\n  const isDup = seen.some(s =>\n    s.email      === d.email &&\n    s.issue_type === d.issue_type &&\n    Math.abs(ts  - s.ts) <= 86400000\n  );\n\n  if (isDup) {\n    // just skip duplicates\n  } else {\n    seen.push({ email: d.email, issue_type: d.issue_type, ts });\n    valid.push({ json: d });\n  }\n}\nreturn valid;"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1200,
-        32
-      ],
-      "id": "cde4b789-b2ac-4143-865a-2c99e371a124",
-      "name": "confidence >= 60% ---> Auto approved"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1408,
-        320
-      ],
-      "id": "a28b4516-dd01-48c9-b30c-44ae5b8f2e28",
-      "name": "confidence  < 60% ---> HITL: Ask Human"
-    },
-    {
-      "parameters": {
-        "batching": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.9,
-      "position": [
-        1520,
-        32
-      ],
-      "id": "9b5804ee-ab09-40cc-9373-24f4da0b4c39",
-      "name": "AI Summarize Description"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\n\nconst routing = {\n  wifi:     'Network',\n  login:    'IT Support',\n  software: 'Applications',\n  hardware: 'Infrastructure',\n  other:    'General'\n};\n\nconst slaHours = { high: 4, medium: 24, low: 72 };\n\nfunction genId() {\n  return 'T-' + Math.random().toString(36).substr(2, 8).toUpperCase();\n}\n\nfunction parseTimestamp(raw) {\n  if (!raw) return new Date();\n  // Replace space with T so JS can parse \"2026-03-10 09:00:00\"\n  const cleaned = String(raw).trim().replace(' ', 'T');\n  const dt = new Date(cleaned);\n  // If still invalid, return now\n  return isNaN(dt.getTime()) ? new Date() : dt;\n}\n\nreturn items.map(item => {\n  const d   = item.json;\n  const ts  = parseTimestamp(d.timestamp);\n  const hrs = slaHours[d.priority] || 72;\n  const sla = new Date(ts.getTime() + hrs * 3600000);\n\n  return { json: {\n    ...d,\n    ticket_id:     genId(),\n    assigned_team: routing[d.issue_type] || 'General',\n    sla_deadline:  sla.toISOString().replace('T', ' ').substr(0, 19),\n  }};\n});"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1696,
-        832
-      ],
-      "id": "a61d6e58-6c37-4e01-8ca7-52ea77a1b22b",
-      "name": "Deduplicate"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\nconst teamCount = {};\n\nfor (const item of items) {\n  const team = item.json.assigned_team || 'Unknown';\n  teamCount[team] = (teamCount[team] || 0) + 1;\n}\n\nreturn [{ json: {\n  total_processed: items.length,\n  tickets_per_team: teamCount,\n}}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1840,
-        336
-      ],
-      "id": "885b2ee8-b5f7-4d4c-8563-b12981c724d0",
-      "name": "Assign Team + Calculate SLA Deadline"
-    },
-    {
-      "parameters": {
-        "operation": "write",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1.1,
       "position": [
         2000,
-        96
+        976
       ],
-      "id": "9f3a53cb-ecb7-46bd-bc18-e0e2aef20dae",
-      "name": "Rejected_tickets"
+      "id": "0af37810-ed6a-4bff-88af-5131f8904ea6",
+      "name": "FIX TICKET IDs1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst emailRegex = /^[\\w\\.\\-]+@[\\w\\.\\-]+\\.\\w+$/;\nconst validPriorities = ['high', 'medium', 'low'];\nconst validIssues = ['wifi', 'login', 'software', 'hardware', 'other'];\n\nreturn items.map(item => {\n  const d = item.json;\n  let reject_reason = null;\n\n  if (!emailRegex.test(d.email || '')) {\n    reject_reason = 'Invalid email format';\n  }\n\n  return { json: {\n    ...d,\n    reject_reason,\n    needsPriorityFix: !validPriorities.includes(d.priority || ''),\n    needsIssueFix:    !validIssues.includes(d.issue_type || ''),\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2224,
+        976
+      ],
+      "id": "80f09757-a9b0-4ca8-b990-3c7ad2b9ebb1",
+      "name": "Validate Email1"
     },
     {
       "parameters": {
         "operation": "write",
+        "fileName": "C:\\Users\\gagan\\.n8n-files\\rejected_tickets.csv",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        2032,
-        544
+        2960,
+        1120
       ],
-      "id": "133084b1-0f2b-4693-b4c1-8e98215e227e",
-      "name": "summary_report"
+      "id": "8f2f67d9-3574-449e-8fcd-2f006d396a76",
+      "name": "rejected_ticket1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst validPriorities = ['high', 'medium', 'low'];\n\nreturn items.map(item => {\n  const d = item.json;\n  return { json: {\n    ...d,\n    needsPriorityFix: !validPriorities.includes(d.priority || '')\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        832
+      ],
+      "id": "df1d3e27-196e-48f3-b334-e5ae2177d615",
+      "name": "valid priority1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// confidence >= 60% — AI decision trusted automatically\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3472,
+        736
+      ],
+      "id": "0d1f0e5f-bfec-49bf-891a-e97e33df42e5",
+      "name": "confidence>=60% auto approved1"
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        3472,
+        928
+      ],
+      "id": "58e0718e-55d7-4468-ab6e-3eaf0c61e9fa",
+      "name": "confidence < 60% ->HITL1",
+      "webhookId": "fc65bb43-dac9-4b7e-9c72-5c5d74dd175b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst validIssues = ['wifi', 'login', 'software', 'hardware', 'other'];\n\nreturn items.map(item => {\n  const d = item.json;\n  return { json: {\n    ...d,\n    needsIssueFix: !validIssues.includes(d.issue_type || '')\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3696,
+        832
+      ],
+      "id": "276a89fc-60e6-47c2-bc6e-46aba9b35ae9",
+      "name": "valid issue type1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Read this IT support ticket and classify its issue type.\n\nDescription: {{ $json.description }}\n\nCategories:\n- wifi = internet, network, connection\n- login = password, account access\n- software = app crash, program not working\n- hardware = physical device, screen, keyboard\n- other = anything else\n\nReply ONLY in this exact format:\nissue_type: wifi\nconfidence: 85",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        3920,
+        832
+      ],
+      "id": "c4c3e9e5-aed3-4f4c-9edb-3d9af17766ce",
+      "name": "AI detects issue type + confidence score1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// confidence >= 60% — AI decision trusted automatically\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4496,
+        736
+      ],
+      "id": "342cabff-8e26-40f8-b6ee-8f562c8acc32",
+      "name": "confidence >= 60% ---> Auto approved1"
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        4496,
+        928
+      ],
+      "id": "4918cd82-215a-40cd-91f9-cbd0ade1c039",
+      "name": "confidence  < 60% ---> HITL: Ask Human1",
+      "webhookId": "7d1a938b-a165-40df-aa3f-6ffc60d6ba1a"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Summarize this IT support ticket in ONE sentence, maximum 15 words.\n\nDescription: {{ $json.description }}\n\nReply with ONLY the summary. Nothing else.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        4720,
+        832
+      ],
+      "id": "bb6762f7-b038-4a3b-9b4a-adc62b15b421",
+      "name": "AI Summarize Description1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst seen = [], valid = [];\n\nfor (const item of items) {\n  const d = item.json;\n  const rawTs = String(d.timestamp || '').replace(' ', 'T');\n  const ts = new Date(rawTs).getTime() || Date.now();\n\n  const isDup = seen.some(s =>\n    s.email      === d.email &&\n    s.issue_type === d.issue_type &&\n    Math.abs(ts  - s.ts) <= 86400000\n  );\n\n  if (!isDup) {\n    seen.push({ email: d.email, issue_type: d.issue_type, ts });\n    valid.push({ json: d });\n  }\n}\nreturn valid;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5072,
+        832
+      ],
+      "id": "eec675c9-3b7e-4b67-a69f-3bda22ff1b33",
+      "name": "Deduplicate1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst routing = {\n  wifi:     'Network',\n  login:    'IT Support',\n  software: 'Applications',\n  hardware: 'Infrastructure',\n  other:    'General'\n};\n\nconst slaHours = { high: 4, medium: 24, low: 72 };\n\nreturn items.map(item => {\n  const d   = item.json;\n  const raw = String(d.timestamp || '').replace(' ', 'T');\n  const ts  = new Date(raw);\n  const hrs = slaHours[d.priority] || 72;\n  const sla = new Date((isNaN(ts) ? new Date() : ts).getTime() + hrs * 3600000);\n\n  return { json: {\n    ...d,\n    assigned_team: routing[d.issue_type] || 'General',\n    sla_deadline:  sla.toISOString().replace('T', ' ').substr(0, 19),\n  }};\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5296,
+        832
+      ],
+      "id": "ee60e76c-4aa5-4748-b8b4-c039f68ac788",
+      "name": "Assign Team + Calculate SLA Deadline1"
     },
     {
       "parameters": {
         "operation": "write",
+        "fileName": "C:\\Users\\gagan\\.n8n-files\\processed_tickets.csv",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1.1,
       "position": [
-        2032,
-        336
+        5744,
+        736
       ],
-      "id": "0833f67c-b597-4996-959c-bae1d275814a",
-      "name": "processed_tickets"
+      "id": "879e1110-3225-4400-ab55-3feb1fa4eed1",
+      "name": "processed_tickets1"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "C:\\Users\\gagan\\.n8n-files\\summary_report.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        5968,
+        928
+      ],
+      "id": "8df477c4-c143-422b-bbec-f69870ae8602",
+      "name": "summary_report1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        976
+      ],
+      "id": "e0f1b8fc-f73a-407f-947d-5936e39339cd",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        5744,
+        928
+      ],
+      "id": "16a34d35-db8c-40d4-b063-61e637ad23c0",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        5520,
+        736
+      ],
+      "id": "3892a550-d21f-4da7-8151-8f82ba92def6",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2672,
+        1120
+      ],
+      "id": "df7ebf68-23fc-4807-8f2b-fee18425382a",
+      "name": "Convert to File2"
     }
   ],
   "pinData": {},
   "connections": {
-    "start-new ticket recived": {
-      "main": [
-        [
-          {
-            "node": "sample data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Normalize Text": {
-      "main": [
-        [
-          {
-            "node": "FIX TICKET IDs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "sample data": {
-      "main": [
-        [
-          {
-            "node": "Normalize Text",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "FIX TICKET IDs": {
-      "main": [
-        [
-          {
-            "node": "Validate Email",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Validate Email": {
-      "main": [
-        [
-          {
-            "node": "rejected_ticket",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "valid priority",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "valid priority": {
+      "main": [
+        [
+          {
+            "node": "Create a conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "valid or rejected?": {
+      "main": [
+        [
+          {
+            "node": "valid priority1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Convert to File2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Priority Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI detects priority + confidence score",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI detects priority + confidence score": {
+      "main": [
+        [
+          {
+            "node": "confidence >= 60%?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "confidence >= 60%?": {
+      "main": [
+        [
+          {
+            "node": "confidence>=60% auto approved1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "confidence < 60% ->HITL1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Issue Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI detects issue type + confidence score1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "issue confidence >= 60%?": {
+      "main": [
+        [
+          {
+            "node": "confidence >= 60% ---> Auto approved1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "confidence  < 60% ---> HITL: Ask Human1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Summary Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Summarize Description1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Summary Report": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "sample data1": {
+      "main": [
+        [
+          {
+            "node": "Normalize Text1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Text1": {
+      "main": [
+        [
+          {
+            "node": "FIX TICKET IDs1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FIX TICKET IDs1": {
+      "main": [
+        [
+          {
+            "node": "Validate Email1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Email1": {
+      "main": [
+        [
+          {
+            "node": "valid or rejected?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "valid priority1": {
       "main": [
         [
           {
@@ -339,135 +632,148 @@
         ]
       ]
     },
-    "AI detects priority + confidence score": {
+    "confidence>=60% auto approved1": {
       "main": [
         [
           {
-            "node": "confidence>=60% auto approved",
+            "node": "valid issue type1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "confidence < 60% ->HITL1": {
+      "main": [
+        [
+          {
+            "node": "valid issue type1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "valid issue type1": {
+      "main": [
+        [
+          {
+            "node": "AI detects issue type + confidence score1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI detects issue type + confidence score1": {
+      "main": [
+        [
+          {
+            "node": "issue confidence >= 60%?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "confidence >= 60% ---> Auto approved1": {
+      "main": [
+        [
+          {
+            "node": "AI Summarize Description1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "confidence  < 60% ---> HITL: Ask Human1": {
+      "main": [
+        [
+          {
+            "node": "AI Summarize Description1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Summarize Description1": {
+      "main": [
+        [
+          {
+            "node": "Deduplicate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplicate1": {
+      "main": [
+        [
+          {
+            "node": "Assign Team + Calculate SLA Deadline1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign Team + Calculate SLA Deadline1": {
+      "main": [
+        [
+          {
+            "node": "Generate Summary Report",
             "type": "main",
             "index": 0
           },
           {
-            "node": "confidence < 60% ->HITL",
+            "node": "Convert to File1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "confidence>=60% auto approved": {
+    "When clicking ‘Execute workflow’": {
       "main": [
         [
           {
-            "node": "valid issue type",
+            "node": "sample data1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "confidence < 60% ->HITL": {
+    "Convert to File": {
       "main": [
         [
           {
-            "node": "valid issue type",
+            "node": "summary_report1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "valid issue type": {
+    "Convert to File1": {
       "main": [
         [
           {
-            "node": "AI detects issue type + confidence score",
+            "node": "processed_tickets1",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "AI detects issue type + confidence score": {
+    "Convert to File2": {
       "main": [
         [
           {
-            "node": "confidence >= 60% ---> Auto approved",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "confidence  < 60% ---> HITL: Ask Human",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "confidence >= 60% ---> Auto approved": {
-      "main": [
-        [
-          {
-            "node": "AI Summarize Description",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "confidence  < 60% ---> HITL: Ask Human": {
-      "main": [
-        [
-          {
-            "node": "AI Summarize Description",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Summarize Description": {
-      "main": [
-        [
-          {
-            "node": "Deduplicate",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Deduplicate": {
-      "main": [
-        [
-          {
-            "node": "Assign Team + Calculate SLA Deadline",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "rejected_ticket",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Assign Team + Calculate SLA Deadline": {
-      "main": [
-        [
-          {
-            "node": "Rejected_tickets",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "processed_tickets",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "summary_report",
+            "node": "rejected_ticket1",
             "type": "main",
             "index": 0
           }
@@ -481,7 +787,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "0d302dda-31e0-4309-aca9-57e9437ded7d",
+  "versionId": "451cab24-cd63-45e2-b823-7eb5df5505f4",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "6e5e2ddc70c2a4e15c689328fddb064f162329e6ac7b475a0d135bcca6686c56"
